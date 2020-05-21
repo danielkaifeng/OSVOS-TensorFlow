@@ -52,17 +52,26 @@ class Dataset:
         self.labels_train_path = []
         for idx, line in enumerate(train_paths):
             if store_memory:
-                img = Image.open(os.path.join(database_root, str(line.split()[0])))
+                img = Image.open(os.path.join(database_root, str(line.split()[0]))).convert('RGB')
                 img.load()
+
+                #label = Image.open(os.path.join(database_root, str(line.split()[1]))).convert('RGB')
+                #label = np.array(label)
+                #label[np.sum(label,axis=2)==0] = 0
+                #label = np.argmax(label, axis=2)
+                #print(np.unique(label))
+
                 label = Image.open(os.path.join(database_root, str(line.split()[1])))
                 label.load()
                 label = label.split()[0]
+                #print(type(label), label.size)
                 if data_aug:
                     if idx == 0: sys.stdout.write('Performing the data augmentation')
                     for scale in data_aug_scales:
                         img_size = tuple([int(img.size[0] * scale), int(img.size[1] * scale)])
                         img_sc = img.resize(img_size)
                         label_sc = label.resize(img_size)
+                        print(label.size, img_size)
                         self.images_train.append(np.array(img_sc, dtype=np.uint8))
                         self.labels_train.append(np.array(label_sc, dtype=np.uint8))
                         if data_aug_flip:
@@ -87,7 +96,8 @@ class Dataset:
         self.images_test_path = []
         for idx, line in enumerate(test_paths):
             if store_memory:
-                self.images_test.append(np.array(Image.open(os.path.join(database_root, str(line.split()[0]))),
+                #self.images_test.append(np.array(Image.open(os.path.join(database_root, str(line.split()[0]))),
+                self.images_test.append(np.array(Image.open(os.path.join(database_root, str(line.split()[0]))).convert("RGB"),
                                                  dtype=np.uint8))
                 if (idx + 1) % 1000 == 0:
                     print('Loaded ' + str(idx) + ' test images')
@@ -169,4 +179,11 @@ class Dataset:
 
     def train_img_size(self):
         width, height = Image.open(self.images_train[self.train_ptr]).size
+        print('width, height:', width, height)
         return height, width
+
+
+
+
+
+

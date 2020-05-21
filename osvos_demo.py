@@ -21,9 +21,12 @@ sys.path.append(os.path.abspath(root_folder))
 import osvos
 from dataset import Dataset
 os.chdir(root_folder)
+from sys import argv
+
 
 # User defined parameters
-seq_name = "car-shadow"
+seq_name = argv[1]
+#seq_name = "car-shadow"
 gpu_id = 0
 train_model = True
 result_path = os.path.join('DAVIS', 'Results', 'Segmentations', '480p', 'OSVOS', seq_name)
@@ -37,8 +40,18 @@ max_training_iters = 500
 test_frames = sorted(os.listdir(os.path.join('DAVIS', 'JPEGImages', '480p', seq_name)))
 test_imgs = [os.path.join('DAVIS', 'JPEGImages', '480p', seq_name, frame) for frame in test_frames]
 if train_model:
-    train_imgs = [os.path.join('DAVIS', 'JPEGImages', '480p', seq_name, '00000.jpg')+' '+
-                  os.path.join('DAVIS', 'Annotations', '480p', seq_name, '00000.png')]
+    train_imgs = []
+    anno_path = os.path.join('DAVIS', 'Annotations', '480p', seq_name)
+    anno_names = os.listdir(anno_path)
+    if len(anno_names) > 3:
+        select_names = np.random.choice(anno_names, 3)
+    else:
+        select_names = anno_names[0]
+
+    for name in select_names:
+        ID = name.split('.')[0]
+        train_imgs += [os.path.join('DAVIS', 'JPEGImages', '480p', seq_name, '%s.jpg' % ID)+' '+
+                  os.path.join(anno_path, name)]
     dataset = Dataset(train_imgs, test_imgs, './', data_aug=True)
 else:
     dataset = Dataset(None, test_imgs, './')
@@ -75,7 +88,14 @@ for img_p in test_frames:
     im_over[:, :, 0] = (1 - mask) * img[:, :, 0] + mask * (overlay_color[0]*transparency + (1-transparency)*img[:, :, 0])
     im_over[:, :, 1] = (1 - mask) * img[:, :, 1] + mask * (overlay_color[1]*transparency + (1-transparency)*img[:, :, 1])
     im_over[:, :, 2] = (1 - mask) * img[:, :, 2] + mask * (overlay_color[2]*transparency + (1-transparency)*img[:, :, 2])
-    plt.imshow(im_over.astype(np.uint8))
+
+    im_over = im_over.astype(np.uint8)
+    img = Image.fromarray(im_over)
+
+    os.makedirs(os.path.join("img_output", seq_name), exist_ok=True)
+    img.save(os.path.join("img_output", seq_name, frame_num+'.png'))
+
+    plt.imshow(im_over)
     plt.axis('off')
     plt.show()
     plt.pause(0.01)

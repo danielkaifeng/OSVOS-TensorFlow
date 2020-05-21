@@ -1,22 +1,14 @@
 from __future__ import print_function
-"""
-Sergi Caelles (scaelles@vision.ee.ethz.ch)
-
-This file is part of the OSVOS paper presented in:
-    Sergi Caelles, Kevis-Kokitsi Maninis, Jordi Pont-Tuset, Laura Leal-Taixe, Daniel Cremers, Luc Van Gool
-    One-Shot Video Object Segmentation
-    CVPR 2017
-Please consider citing the paper if you use this code.
-"""
 import tensorflow as tf
 import numpy as np
 from tensorflow.contrib.layers.python.layers import utils
 import sys
 from datetime import datetime
 import os
-import scipy.misc
+#import scipy.misc
 from PIL import Image
 import six
+import imageio 
 
 slim = tf.contrib.slim
 
@@ -186,12 +178,16 @@ def preprocess_labels(label):
     Returns:
     Label ready to compute the loss (1,W,H,1)
     """
+    #print(label)
     if type(label) is not np.ndarray:
         label = np.array(Image.open(label).split()[0], dtype=np.uint8)
+
     max_mask = np.max(label) * 0.5
     label = np.greater(label, max_mask)
+    #label = np.int16(label)
+    #print("instance list: ", np.unique(label))
     label = np.expand_dims(np.expand_dims(label, axis=0), axis=3)
-    # label = tf.cast(np.array(label), tf.float32)
+    #label = tf.cast(np.array(label), tf.float32)
     # max_mask = tf.multiply(tf.reduce_max(label), 0.5)
     # label = tf.cast(tf.greater(label, max_mask), tf.float32)
     # label = tf.expand_dims(tf.expand_dims(label, 0), 3)
@@ -647,8 +643,11 @@ def test(dataset, checkpoint_file, result_path, config=None):
             curr_frame = os.path.splitext(curr_frame_orig_name)[0] + '.png'
             image = preprocess_img(img[0])
             res = sess.run(probabilities, feed_dict={input_image: image})
-            res_np = res.astype(np.float32)[0, :, :, 0] > 162.0/255.0
-            scipy.misc.imsave(os.path.join(result_path, curr_frame), res_np.astype(np.float32))
+            #res_np = res.astype(np.float32)[0, :, :, 0] > 162.0/255.0
+            res_np = res.astype(np.float32)[0, :, :, 0] > 200/255.0
+            res_np = np.int8(res_np)*255
+            #scipy.misc.imsave(os.path.join(result_path, curr_frame), res_np.astype(np.float32))
+            imageio.imwrite(os.path.join(result_path, curr_frame), res_np.astype(np.uint8))
             print('Saving ' + os.path.join(result_path, curr_frame))
 
 

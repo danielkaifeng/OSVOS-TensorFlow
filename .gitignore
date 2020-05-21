@@ -1,0 +1,8 @@
+OSVOS-TensorFlow
+DAVIS
+test-*
+__pycache__
+mytest.py
+img_output
+00*
+models/*
